@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Text;
 using Karambolo.PO;
 using OfficeOpenXml;
 
@@ -34,6 +35,13 @@ if (result.Success)
 
     using (var package = new ExcelPackage("Test.xlsx"))
     {
+        var file = new FileInfo("Test.csv");
+        var format = new ExcelOutputTextFormat()
+        {
+            Delimiter = ',',
+            Encoding = Encoding.UTF8,
+        };
+
         if (!package.Workbook.Worksheets.Any())
         {
             package.Workbook.Worksheets.Add("Default");
@@ -42,12 +50,14 @@ if (result.Success)
         var sheet = package.Workbook.Worksheets[0];
         sheet.Cells["A1"].Value = "Key";
         sheet.Cells["B1"].Value = "Source";
-        for (int i = 0; i < catalog.Count; i++)
+        int i = 0;
+        for (; i < catalog.Count; i++)
         {
             sheet.Cells[i + 2, 1].Value = catalog[i].Key.Id;
             sheet.Cells[i + 2, 2].Value = catalog.GetTranslation(catalog[i].Key);
         }
 
+        sheet.Cells[1, 1, i + 2, 2].SaveToText(file, format);
         package.Save();
     }
 }
