@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Karambolo.PO;
+using OfficeOpenXml;
 
+ExcelPackage.License.SetNonCommercialPersonal("FlowerGolden");
 Console.WriteLine("Hello, World!");
 
 var parser = new POParser(new POParserSettings
@@ -29,6 +31,25 @@ if (result.Success)
     TextWriter writer = new StreamWriter("Test.po");
     generator.Generate(writer, catalog);
     writer.Flush();
+
+    using (var package = new ExcelPackage("Test.xlsx"))
+    {
+        if (!package.Workbook.Worksheets.Any())
+        {
+            package.Workbook.Worksheets.Add("Default");
+        }
+
+        var sheet = package.Workbook.Worksheets[0];
+        sheet.Cells["A1"].Value = "Key";
+        sheet.Cells["B1"].Value = "Source";
+        for (int i = 0; i < catalog.Count; i++)
+        {
+            sheet.Cells[i + 2, 1].Value = catalog[i].Key.Id;
+            sheet.Cells[i + 2, 2].Value = catalog.GetTranslation(catalog[i].Key);
+        }
+
+        package.Save();
+    }
 }
 else
 {
