@@ -7,61 +7,69 @@ using OfficeOpenXml;
 ExcelPackage.License.SetNonCommercialPersonal("FlowerGolden");
 Console.WriteLine("Hello, World!");
 
-var parser = new POParser(new POParserSettings
+Demo.Foo();
+
+public static class Demo
 {
-    // PreserveHeadersOrder = true,
-    StringDecodingOptions = new POStringDecodingOptions
+    public static void Foo()
     {
-        KeepKeyStringsPlatformIndependent = true,
-        KeepTranslationStringsPlatformIndependent = true,
-    },
-});
-
-TextReader reader = new StreamReader("Game.po");
-
-var result = parser.Parse(reader);
-if (result.Success)
-{
-    var catalog = result.Catalog;
-
-    var generator = new POGenerator(new POGeneratorSettings
-    {
-        // PreserveHeadersOrder = true,
-    });
-
-    TextWriter writer = new StreamWriter("Test.po");
-    generator.Generate(writer, catalog);
-    writer.Flush();
-
-    using (var package = new ExcelPackage("Test.xlsx"))
-    {
-        var file = new FileInfo("Test.csv");
-        var format = new ExcelOutputTextFormat()
+        var parser = new POParser(new POParserSettings
         {
-            Delimiter = ',',
-            Encoding = Encoding.UTF8,
-        };
+            // PreserveHeadersOrder = true,
+            StringDecodingOptions = new POStringDecodingOptions
+            {
+                KeepKeyStringsPlatformIndependent = true,
+                KeepTranslationStringsPlatformIndependent = true,
+            },
+        });
 
-        if (!package.Workbook.Worksheets.Any())
+        TextReader reader = new StreamReader("Game.po");
+
+        var result = parser.Parse(reader);
+        if (result.Success)
         {
-            package.Workbook.Worksheets.Add("Default");
+            var catalog = result.Catalog;
+
+            var generator = new POGenerator(new POGeneratorSettings
+            {
+                // PreserveHeadersOrder = true,
+            });
+
+            TextWriter writer = new StreamWriter("Test.po");
+            generator.Generate(writer, catalog);
+            writer.Flush();
+
+            using (var package = new ExcelPackage("Test.xlsx"))
+            {
+                var file = new FileInfo("Test.csv");
+                var format = new ExcelOutputTextFormat()
+                {
+                    Delimiter = ',',
+                    Encoding = Encoding.UTF8,
+                };
+
+                if (!package.Workbook.Worksheets.Any())
+                {
+                    package.Workbook.Worksheets.Add("Default");
+                }
+
+                var sheet = package.Workbook.Worksheets[0];
+                sheet.Cells["A1"].Value = "Key";
+                sheet.Cells["B1"].Value = "Source";
+                int i = 0;
+                for (; i < catalog.Count; i++)
+                {
+                    sheet.Cells[i + 2, 1].Value = catalog[i].Key.Id;
+                    sheet.Cells[i + 2, 2].Value = catalog.GetTranslation(catalog[i].Key);
+                }
+
+                sheet.Cells[1, 1, i + 2, 2].SaveToText(file, format);
+                package.Save();
+            }
         }
-
-        var sheet = package.Workbook.Worksheets[0];
-        sheet.Cells["A1"].Value = "Key";
-        sheet.Cells["B1"].Value = "Source";
-        int i = 0;
-        for (; i < catalog.Count; i++)
+        else
         {
-            sheet.Cells[i + 2, 1].Value = catalog[i].Key.Id;
-            sheet.Cells[i + 2, 2].Value = catalog.GetTranslation(catalog[i].Key);
+            var diagnostics = result.Diagnostics;
         }
-
-        sheet.Cells[1, 1, i + 2, 2].SaveToText(file, format);
-        package.Save();
     }
-}
-else
-{
-    var diagnostics = result.Diagnostics;
 }
