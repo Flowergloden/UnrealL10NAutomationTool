@@ -3,12 +3,47 @@
 using System.Text;
 using Karambolo.PO;
 using OfficeOpenXml;
+using UnrealL10NAutomationTool.StringTableGenerator;
 
 ExcelPackage.License.SetNonCommercialPersonal("FlowerGolden");
 Console.WriteLine("Hello, World!");
 
-Demo.Foo();
+var parser = new POParser(new POParserSettings
+{
+    // PreserveHeadersOrder = true,
+    StringDecodingOptions = new POStringDecodingOptions
+    {
+        KeepKeyStringsPlatformIndependent = true,
+        KeepTranslationStringsPlatformIndependent = true,
+    },
+});
 
+TextReader reader = new StreamReader("Game.po");
+
+var result = parser.Parse(reader);
+if (result.Success)
+{
+    var catalog = result.Catalog;
+    using var package = new ExcelPackage("Test.xlsx");
+    var generator = new Generator(catalog, package);
+    generator.Generate();
+        
+    var file = new FileInfo("Test.csv");
+    var format = new ExcelOutputTextFormat()
+    {
+        Delimiter = ',',
+        Encoding = Encoding.UTF8,
+    };
+    package.Save();
+}
+else
+{
+    var diagnostics = result.Diagnostics;
+}
+
+/**
+ *
+ */
 public static class Demo
 {
     public static void Foo()
