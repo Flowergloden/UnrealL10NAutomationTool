@@ -26,15 +26,19 @@ if (result.Success)
     var catalog = result.Catalog;
     using var package = new ExcelPackage("Test.xlsx");
     var generator = new Generator(catalog, package);
-    generator.Generate();
-        
-    var file = new FileInfo("Test.csv");
+    var report = generator.Generate();
+
+    var csvFile = new FileInfo("Test.csv");
     var format = new ExcelOutputTextFormat()
     {
         Delimiter = ',',
         Encoding = Encoding.UTF8,
     };
+    package.Workbook.Worksheets[0].Cells[1, 1, report.Num + 2, 2].SaveToText(csvFile, format);
     package.Save();
+
+    var reportFile = new StreamWriter("report.txt");
+    await reportFile.WriteAsync(report.Generate());
 }
 else
 {
