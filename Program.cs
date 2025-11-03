@@ -39,6 +39,7 @@ if (result.Success)
 
     var reportFile = new StreamWriter("report.txt");
     await reportFile.WriteAsync(report.Generate());
+    reportFile.Close();
 }
 else
 {
